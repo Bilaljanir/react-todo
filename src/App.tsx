@@ -1,12 +1,11 @@
+import TodoList from './components/TodoList';
 import './App.css';
 
-const App = () => {
+export default function App() {
   return (
-    <div className="content">
-      <h1>Rsbuild with React</h1>
-      <p>Start building amazing things with Rsbuild.</p>
+    <div className="app">
+      <h1>React Todo App</h1>
+      <TodoList />
     </div>
   );
-};
-
-export default App;
+}
