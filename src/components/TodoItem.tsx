@@ -1,3 +1,5 @@
+import './TodoItem.css';
+
 interface TodoItemProps {
   id: number;
   title: string;
@@ -6,9 +8,9 @@ interface TodoItemProps {
 
 export default function TodoItem({ title, completed }: TodoItemProps) {
   return (
-    <div className="todo-item">
+    <div className={`todo-item ${completed ? 'completed' : ''}`}>
       <input type="checkbox" checked={completed} readOnly />
-      <span style={{ textDecoration: completed ? 'line-through' : 'none' }}>
+      <span className={`todo-item-text ${completed ? 'completed' : ''}`}>
         {title}
       </span>
     </div>

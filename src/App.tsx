@@ -4,7 +4,7 @@ import './App.css';
 export default function App() {
   return (
     <div className="app">
-      <h1>React Todo App</h1>
+      <h1>📝 Ma Todo List</h1>
       <TodoList />
     </div>
   );
