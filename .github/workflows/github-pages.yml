@@ -35,7 +35,7 @@ jobs:
       # If you use other package managers like yarn or pnpm,
       # you will need to install them first
       - name: Install dependencies
-        run: npm i
+        run: pnpm i
 
       - name: Build
         run: npm run build
