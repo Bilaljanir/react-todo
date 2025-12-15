@@ -19,10 +19,11 @@ export default function TodoList() {
   const fetchTodos = async () => {
     try {
       const response = await fetch(API_URL);
-      if (response.ok) {
-        const data = await response.json();
-        if (Array.isArray(data)) setTodos(data);
+      if (!response.ok) {
+        throw new Error('Failed to fetch todos');
       }
+      const data = await response.json();
+      if (Array.isArray(data)) setTodos(data);
     } catch (error) {
       console.error("Erreur chargement:", error);
     }

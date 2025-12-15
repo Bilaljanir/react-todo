@@ -27,13 +27,15 @@ export default function TodoItem({ id, title, done, content, due_date, onToggle,
           checked={done}
           readOnly
         />
-        <span className="checkmark"></span>
       </div>
 
-      {}
       <div className="todo-content-area">
         <h3 className="todo-title">{title}</h3>
-        {content && <p className="todo-description">{content}</p>}
+
+        {content && (
+          <p className="todo-description">{content}</p>
+        )}
+
         {due_date && (
           <div className="todo-meta">
             <span className="date-badge">📅 {due_date}</span>
@@ -41,7 +43,6 @@ export default function TodoItem({ id, title, done, content, due_date, onToggle,
         )}
       </div>
 
-      {}
       <button
         className="delete-btn"
         onClick={handleDeleteClick}
