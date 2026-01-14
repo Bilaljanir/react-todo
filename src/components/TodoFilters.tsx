@@ -1,7 +1,5 @@
+import type { FilterType, SortType } from '../types';
 import './TodoFilters.css';
-
-export type FilterType = 'all' | 'done' | 'undone';
-export type SortType = 'date' | 'alphabetical';
 
 interface TodoFiltersProps {
   currentFilter: FilterType;

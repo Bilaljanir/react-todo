@@ -1,13 +1,12 @@
 import './TodoItem.css';
 import EditableField from './EditableField';
-import type { Todo } from './TodoList';
+import type { Todo } from '../types';
 
 interface TodoItemProps extends Todo {
   onToggle: (id: number) => void;
   onDelete: (id: number) => void;
   onUpdate: (id: number, updates: Partial<Todo>) => void;
 }
-
 export default function TodoItem({ id, title, done, content, due_date, onToggle, onDelete, onUpdate }: TodoItemProps) {
 
   const handleDeleteClick = (e: React.MouseEvent) => {
@@ -27,7 +26,6 @@ export default function TodoItem({ id, title, done, content, due_date, onToggle,
       </div>
 
       <div className="todo-content-area">
-        {}
         <h3 className="todo-title">
           <EditableField
             value={title}
@@ -35,7 +33,6 @@ export default function TodoItem({ id, title, done, content, due_date, onToggle,
             className="font-bold"
           />
         </h3>
-        {}
         <div className="todo-description">
           <EditableField
             value={content || ''}
@@ -44,7 +41,6 @@ export default function TodoItem({ id, title, done, content, due_date, onToggle,
             onSave={(newVal) => onUpdate(id, { content: newVal })}
           />
         </div>
-        {}
         <div className="todo-meta">
           <span className="date-badge">
             📅
