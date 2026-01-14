@@ -1,0 +1,30 @@
+.editable-view {
+    cursor: text;
+    padding: 2px 4px;
+    border-radius: 4px;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+    display: inline-block;
+    min-width: 20px;
+}
+
+.editable-view:hover {
+    background-color: #f1f5f9;
+    border-color: #cbd5e0;
+}
+
+.editable-view.empty {
+    font-style: italic;
+    color: #94a3b8;
+}
+
+.editable-input {
+    width: 100%;
+    padding: 4px 8px;
+    border: 1px solid #6366f1;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: inherit;
+    outline: none;
+    background-color: white;
+}
