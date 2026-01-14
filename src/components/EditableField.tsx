@@ -68,8 +68,7 @@ export default function EditableField({
       <input
         ref={inputRef as never}
         type={type}
-        className={`editable-input ${className}`}
-        value={tempValue}
+        className={['editable-input', className].filter(Boolean).join(' ')}        value={tempValue}
         onChange={(e) => setTempValue(e.target.value)}
         onBlur={handleSave}
         onKeyDown={handleKeyDown}
@@ -79,7 +78,7 @@ export default function EditableField({
 
   return (
     <span
-      className={`editable-view ${!value ? 'empty' : ''} ${className}`}
+      className={['editable-view', !value ? 'empty' : '', className].filter(Boolean).join(' ')}
       onClick={(e) => {
         e.stopPropagation();
         setIsEditing(true);

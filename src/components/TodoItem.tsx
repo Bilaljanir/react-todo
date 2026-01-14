@@ -28,13 +28,13 @@ export default function TodoItem({ id, title, done, content, due_date, onToggle,
 
       <div className="todo-content-area">
         {}
-        <div className="todo-title">
+        <h3 className="todo-title">
           <EditableField
             value={title}
             onSave={(newVal) => onUpdate(id, { title: newVal })}
             className="font-bold"
           />
-        </div>
+        </h3>
         {}
         <div className="todo-description">
           <EditableField
