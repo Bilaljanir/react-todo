@@ -1,15 +1,24 @@
 import './TodoItem.css';
 import EditableField from './EditableField';
 import type { Todo } from '../types';
-import {memo} from 'react';
+import { memo } from 'react';
 
 interface TodoItemProps extends Todo {
   onToggle: (id: number) => void;
   onDelete: (id: number) => void;
   onUpdate: (id: number, updates: Partial<Todo>) => void;
 }
-export default memo(function TodoItem({ id, title, done, content, due_date, onToggle, onDelete, onUpdate }: TodoItemProps) {
 
+export default memo(function TodoItem({ 
+  id, 
+  title, 
+  done, 
+  content, 
+  due_date, 
+  onToggle, 
+  onDelete, 
+  onUpdate 
+}: TodoItemProps) {
   const handleDeleteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     onDelete(id);
@@ -17,7 +26,6 @@ export default memo(function TodoItem({ id, title, done, content, due_date, onTo
 
   return (
     <div className={`todo-item ${done ? 'completed' : ''}`} onClick={() => onToggle(id)}>
-
       <div className="todo-checkbox-container">
         <input
           type="checkbox"
@@ -34,6 +42,7 @@ export default memo(function TodoItem({ id, title, done, content, due_date, onTo
             className="font-bold"
           />
         </h3>
+
         <div className="todo-description">
           <EditableField
             value={content || ''}
@@ -42,6 +51,7 @@ export default memo(function TodoItem({ id, title, done, content, due_date, onTo
             onSave={(newVal) => onUpdate(id, { content: newVal })}
           />
         </div>
+
         <div className="todo-meta">
           <span className="date-badge">
             📅
@@ -62,7 +72,6 @@ export default memo(function TodoItem({ id, title, done, content, due_date, onTo
       >
         🗑️
       </button>
-
     </div>
   );
-})
+});

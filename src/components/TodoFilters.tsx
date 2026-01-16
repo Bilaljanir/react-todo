@@ -9,14 +9,13 @@ interface TodoFiltersProps {
 }
 
 export default function TodoFilters({
-                                      currentFilter,
-                                      currentSort,
-                                      onFilterChange,
-                                      onSortChange }: TodoFiltersProps) {
-
+  currentFilter,
+  currentSort,
+  onFilterChange,
+  onSortChange
+}: TodoFiltersProps) {
   return (
     <div className="filters-container">
-
       <div className="filter-group">
         <span className="filter-label">Afficher :</span>
         <button
@@ -59,7 +58,6 @@ export default function TodoFilters({
           Nom
         </button>
       </div>
-
     </div>
   );
 }
