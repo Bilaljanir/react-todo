@@ -10,13 +10,12 @@ interface EditableFieldProps {
 }
 
 export default function EditableField({
-                                        value,
-                                        onSave,
-                                        type = 'text',
-                                        placeholder = "Cliquer pour éditer",
-                                        className
-                                      }: EditableFieldProps) {
-
+  value,
+  onSave,
+  type = 'text',
+  placeholder = "Cliquer pour éditer",
+  className
+}: EditableFieldProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [tempValue, setTempValue] = useState(value);
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
@@ -30,7 +29,6 @@ export default function EditableField({
       inputRef.current.focus();
     }
   }, [isEditing]);
-
 
   const handleSave = () => {
     setIsEditing(false);
@@ -54,7 +52,7 @@ export default function EditableField({
       return (
         <textarea
           ref={inputRef as never}
-          className={`editable-input ${className}`}
+          className={['editable-input', className].filter(Boolean).join(' ')}
           value={tempValue}
           onChange={(e) => setTempValue(e.target.value)}
           onBlur={handleSave}
@@ -68,7 +66,7 @@ export default function EditableField({
       <input
         ref={inputRef as never}
         type={type}
-        className={`editable-input ${className}`}
+        className={['editable-input', className].filter(Boolean).join(' ')}
         value={tempValue}
         onChange={(e) => setTempValue(e.target.value)}
         onBlur={handleSave}
@@ -79,7 +77,7 @@ export default function EditableField({
 
   return (
     <span
-      className={`editable-view ${!value ? 'empty' : ''} ${className}`}
+      className={['editable-view', !value ? 'empty' : '', className].filter(Boolean).join(' ')}
       onClick={(e) => {
         e.stopPropagation();
         setIsEditing(true);
