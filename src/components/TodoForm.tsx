@@ -52,7 +52,7 @@ export default function TodoForm({ onAddTodo }: TodoFormProps) {
 
       <div className="form-group">
         <label htmlFor="title">Titre *</label>
-        <input type="text" name="title" id="title" placeholder="Ex: Acheter du pain" disabled={isPending} />
+        <input type="text" name="title" id="title" disabled={isPending} />
       </div>
 
       <div className="form-group">
@@ -62,7 +62,7 @@ export default function TodoForm({ onAddTodo }: TodoFormProps) {
 
       <div className="form-group">
         <label htmlFor="content">Description</label>
-        <textarea name="content" id="content" placeholder="Détails..." rows={3} disabled={isPending} />
+        <textarea name="content" id="content" rows={3} disabled={isPending} />
       </div>
 
       <button type="submit" disabled={isPending}>

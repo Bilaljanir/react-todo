@@ -1,128 +1,80 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useCallback, useMemo } from 'react';
+import { useTodoStore } from '../store/useTodoStore';
 import TodoItem from './TodoItem';
 import TodoForm from './TodoForm';
-import TodoFilters, { type FilterType, type SortType } from './TodoFilters';
+import TodoFilters from './TodoFilters';
 import ErrorNotification from './ErrorNotification';
+import type { Todo } from '../types';
 import './TodoList.css';
 
-export interface Todo {
-  id: number;
-  title: string;
-  done: boolean;
-  content?: string;
-  due_date?: string;
-}
-
-const API_URL = "https://api.todos.in.jt-lab.ch/todos";
-
 export default function TodoList() {
-  const [todos, setTodos] = useState<Todo[]>([]);
-  const [filter, setFilter] = useState<FilterType>('all');
-  const [sort, setSort] = useState<SortType>('date');
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchTodos = async () => {
-    setError(null);
-    try {
-      const response = await fetch(API_URL);
-      if (response.ok) {
-        const data = await response.json();
-        if (Array.isArray(data)) setTodos(data);
-      } else {
-        throw new Error(`Erreur serveur: ${response.status}`);
-      }
-    } catch (error) {
-      console.error("Erreur chargement:", error);
-      setError("Impossible de charger la liste des tâches.");
-    }
-  };
+  const {
+    todos,
+    filter,
+    sort,
+    error,
+    isLoading,
+    fetchTodos,
+    addTodo,
+    updateTodo,
+    deleteTodo,
+    deleteAllTodos,
+    setFilter,
+    setSort,
+    setError
+  } = useTodoStore();
 
   useEffect(() => {
     fetchTodos();
-  }, []);
+  }, [fetchTodos]);
 
-  const handleAddTodo = async (title: string, content: string, due_date: string) => {
-    setError(null);
-    const newTodoData = {
-      title,
-      content: content || undefined,
-      due_date: due_date || undefined,
-      done: false
-    };
+  const sortedAndFilteredTodos = useMemo(() => {
+    const filtered = todos.filter((todo) => {
+      if (filter === 'done') return todo.done === true;
+      if (filter === 'undone') return todo.done === false;
+      return true;
+    });
 
-    try {
-      const response = await fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newTodoData),
-      });
+    return [...filtered].sort((a, b) => {
+      if (sort === 'alphabetical') return a.title.localeCompare(b.title);
+      if (sort === 'date') {
+        if (!a.due_date) return 1;
+        if (!b.due_date) return -1;
+        return new Date(a.due_date).getTime() - new Date(b.due_date).getTime();
+      }
+      return 0;
+    });
+  }, [todos, filter, sort]);
 
-      if (!response.ok) throw new Error("Erreur lors de la création");
-      await fetchTodos();
-    } catch (err) {
-      console.error(err);
-      setError("Echec la creation. Vérifiez la connexion.");
-      throw err;
-    }
-  };
+  const handleDeleteAll = useCallback(async () => {
+    if (todos.length === 0) return;
 
-  const handleUpdateTodo = async (id: number, updates: Partial<Todo>) => {
-    setError(null);
-
-    const oldTodos = [...todos];
-    setTodos((prevTodos) =>
-      prevTodos.map((todo) =>
-        todo.id === id ? { ...todo, ...updates } : todo
-      )
+    const confirmDelete = window.confirm(
+      "ATTENTION : Vous allez supprimer  tous les tâches.\n\n tes sûr ?"
     );
 
-    try {
-      const response = await fetch(`${API_URL}?id=eq.${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updates),
-      });
-
-      if (!response.ok) throw new Error("Erreur sauvegarde");
-    } catch (err) {
-      console.error("Erreur update:", err);
-      setTodos(oldTodos);
-      setError("Impossible de modifier la tâche. Veuillez réessayer.");
+    if (confirmDelete) {
+      await deleteAllTodos();
     }
-  };
+  }, [todos.length, deleteAllTodos]);
 
-  const handleDelete = async (id: number) => {
-    setError(null);
-    if (!window.confirm("Supprimer cette tâche définitivement ?")) return;
-
-    const oldTodos = [...todos];
-    setTodos((prev) => prev.filter((t) => t.id !== id));
-
-    try {
-      const response = await fetch(`${API_URL}?id=eq.${id}`, { method: 'DELETE' });
-      if (!response.ok) throw new Error("Erreur suppression");
-    } catch (err) {
-      console.error("Erreur delete:", err);
-      setTodos(oldTodos);
-      setError("Impossible de supprimer la tâche.");
+  const handleToggle = useCallback((id: number) => {
+    const currentTodo = todos.find((t) => t.id === id);
+    if (currentTodo) {
+      updateTodo(id, { done: !currentTodo.done });
     }
-  };
+  }, [todos, updateTodo]);
 
-  const filteredTodos = todos.filter((todo) => {
-    if (filter === 'done') return todo.done === true;
-    if (filter === 'undone') return todo.done === false;
-    return true;
-  });
-
-  const sortedAndFilteredTodos = [...filteredTodos].sort((a, b) => {
-    if (sort === 'alphabetical') return a.title.localeCompare(b.title);
-    if (sort === 'date') {
-      if (!a.due_date) return 1;
-      if (!b.due_date) return -1;
-      return new Date(a.due_date).getTime() - new Date(b.due_date).getTime();
+  const handleDelete = useCallback((id: number) => {
+    if (window.confirm("Supprimer cette tâche définitivement ?")) {
+      deleteTodo(id);
     }
-    return 0;
-  });
+  }, [deleteTodo]);
+
+  const handleUpdate = useCallback((id: number, updates: Partial<Todo>) => {
+    updateTodo(id, updates);
+  }, [updateTodo]);
+
 
   return (
     <div className="todo-list">
@@ -131,7 +83,7 @@ export default function TodoList() {
         onClose={() => setError(null)}
       />
 
-      <TodoForm onAddTodo={handleAddTodo} />
+      <TodoForm onAddTodo={addTodo} />
 
       <h2>Mes tâches</h2>
 
@@ -147,15 +99,38 @@ export default function TodoList() {
           <TodoItem
             key={todo.id}
             {...todo}
-            onToggle={(id) => {
-              const todo = todos.find((t) => t.id === id);
-              if (todo) handleUpdateTodo(id, { done: !todo.done });
-            }}
+            onToggle={handleToggle}
             onDelete={handleDelete}
-            onUpdate={handleUpdateTodo}
+            onUpdate={handleUpdate}
           />
         ))}
+
+        {sortedAndFilteredTodos.length === 0 && (
+          <p className="empty-message">Aucune tâche à afficher.</p>
+        )}
       </div>
+
+      {todos.length > 0 && (
+        <div className="delete-all-container" style={{ marginTop: '30px', borderTop: '1px solid #eee', paddingTop: '20px', textAlign: 'center' }}>
+          <button
+            onClick={handleDeleteAll}
+            disabled={isLoading}
+            className="delete-all-btn"
+            style={{
+              backgroundColor: '#dc3545',
+              color: 'white',
+              border: 'none',
+              padding: '10px 20px',
+              borderRadius: '5px',
+              cursor: isLoading ? 'not-allowed' : 'pointer',
+              opacity: isLoading ? 0.7 : 1,
+              fontWeight: 'bold'
+            }}
+          >
+            {isLoading ? 'Suppression en cours...' : 'Tout supprimer'}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
