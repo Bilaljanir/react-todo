@@ -1,9 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useCallback, useMemo } from 'react';
 import { useTodoStore } from '../store/useTodoStore';
 import TodoItem from './TodoItem';
 import TodoForm from './TodoForm';
 import TodoFilters from './TodoFilters';
 import ErrorNotification from './ErrorNotification';
+import type { Todo } from '../types';
 import './TodoList.css';
 
 export default function TodoList() {
@@ -27,33 +28,53 @@ export default function TodoList() {
     fetchTodos();
   }, [fetchTodos]);
 
-  const handleDeleteAll = async () => {
+  const sortedAndFilteredTodos = useMemo(() => {
+    const filtered = todos.filter((todo) => {
+      if (filter === 'done') return todo.done === true;
+      if (filter === 'undone') return todo.done === false;
+      return true;
+    });
+
+    return [...filtered].sort((a, b) => {
+      if (sort === 'alphabetical') return a.title.localeCompare(b.title);
+      if (sort === 'date') {
+        if (!a.due_date) return 1;
+        if (!b.due_date) return -1;
+        return new Date(a.due_date).getTime() - new Date(b.due_date).getTime();
+      }
+      return 0;
+    });
+  }, [todos, filter, sort]);
+
+  const handleDeleteAll = useCallback(async () => {
     if (todos.length === 0) return;
 
     const confirmDelete = window.confirm(
-      "ATTENTION : Vous allez supprimer définitivement TOUTES les tâches.\n\nÊtes-vous sûr de vouloir continuer ?"
+      "ATTENTION : Vous allez supprimer  tous les tâches.\n\n tes sûr ?"
     );
 
     if (confirmDelete) {
       await deleteAllTodos();
     }
-  };
+  }, [todos.length, deleteAllTodos]);
 
-  const filteredTodos = todos.filter((todo) => {
-    if (filter === 'done') return todo.done === true;
-    if (filter === 'undone') return todo.done === false;
-    return true;
-  });
-
-  const sortedAndFilteredTodos = [...filteredTodos].sort((a, b) => {
-    if (sort === 'alphabetical') return a.title.localeCompare(b.title);
-    if (sort === 'date') {
-      if (!a.due_date) return 1;
-      if (!b.due_date) return -1;
-      return new Date(a.due_date).getTime() - new Date(b.due_date).getTime();
+  const handleToggle = useCallback((id: number) => {
+    const currentTodo = todos.find((t) => t.id === id);
+    if (currentTodo) {
+      updateTodo(id, { done: !currentTodo.done });
     }
-    return 0;
-  });
+  }, [todos, updateTodo]);
+
+  const handleDelete = useCallback((id: number) => {
+    if (window.confirm("Supprimer cette tâche définitivement ?")) {
+      deleteTodo(id);
+    }
+  }, [deleteTodo]);
+
+  const handleUpdate = useCallback((id: number, updates: Partial<Todo>) => {
+    updateTodo(id, updates);
+  }, [updateTodo]);
+
 
   return (
     <div className="todo-list">
@@ -78,14 +99,12 @@ export default function TodoList() {
           <TodoItem
             key={todo.id}
             {...todo}
-            onToggle={(id) => {
-              const currentTodo = todos.find((t) => t.id === id);
-              if (currentTodo) updateTodo(id, { done: !currentTodo.done });
-            }}
-            onDelete={deleteTodo}
-            onUpdate={updateTodo}
+            onToggle={handleToggle}
+            onDelete={handleDelete}
+            onUpdate={handleUpdate}
           />
         ))}
+
         {sortedAndFilteredTodos.length === 0 && (
           <p className="empty-message">Aucune tâche à afficher.</p>
         )}
