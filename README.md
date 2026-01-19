@@ -1,36 +1,33 @@
-# Rsbuild project
+# Architecture des Composants
 
-## Setup
 
-Install the dependencies:
+## Conteneur Principal
 
-```bash
-pnpm install
-```
+        TodoList -->|Affiche Erreurs| ErrorNotification ErrorNotification.tsx
+        TodoList -->|Crée Tâches| TodoForm[TodoForm.tsx
+        TodoList -->|Contrôle Vue| TodoFilters TodoFilters.tsx
+        TodoList -->|Itère Liste| TodoItem TodoItem.tsx
 
-## Get started
+## Détails de la Tâche
 
-Start the dev server, and the app will be available at [http://localhost:3000](http://localhost:3000).
+        TodoItem -->|Édition Titre| EditableField[EditableField.tsx
+        TodoItem -->|Édition Contenu| EditableField
+        TodoItem -->|Édition Date| EditableField
 
-```bash
-pnpm run dev
-```
+App : Le point d'entrée qui contient la structure globale.
 
-Build the app for production:
+TodoList : Le composant qui se connecte au store, gère la logique de tri/filtre et orchestre l'affichage.
 
-```bash
-pnpm run build
-```
+TodoItem : Un composant représentant une tâche unique.
 
-Preview the production build locally:
+EditableField : Un composant utilitaire qui bascule entre un affichage texte et un champ de saisie (input/textarea).
 
-```bash
-pnpm run preview
-```
+### Installation
+        npm install
 
-## Learn more
+### Lancer l'app
+        npm run dev
 
-To learn more about Rsbuild, check out the following resources:
+### Construire pour la prod
 
-- [Rsbuild documentation](https://rsbuild.rs) - explore Rsbuild features and APIs.
-- [Rsbuild GitHub repository](https://github.com/web-infra-dev/rsbuild) - your feedback and contributions are welcome!
+        npm run build
