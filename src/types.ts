@@ -11,6 +11,8 @@ export interface Todo extends TodoCreateBase {
 
 export type CreateTodoInput = TodoCreateBase & { done?: boolean };
 
+export type UpdateTodoInput = Partial<TodoCreateBase & { done: boolean }>;
+
 export interface TodoListResponse {
   todos: Todo[];
 }

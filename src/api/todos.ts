@@ -20,17 +20,26 @@ export const createTodoApi = (todo: {
 }): Promise<Todo> =>
   fetch(API_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', Prefer: 'return=representation' },
     body: JSON.stringify(todo),
   }).then((response) => {
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    return response.json();
+    return response.json().then((data) => data[0]);
   });
 
 export const deleteTodoApi = (id: number): Promise<void> =>
   fetch(`${API_URL}?id=eq.${id}`, {
+    method: 'DELETE',
+  }).then((response) => {
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+  });
+
+export const deleteAllTodosApi = (): Promise<void> =>
+  fetch(API_URL, {
     method: 'DELETE',
   }).then((response) => {
     if (!response.ok) {

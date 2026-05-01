@@ -1,6 +1,5 @@
-import { use, useMemo, useState, Suspense } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import type { Todo } from '../types';
-import { deleteTodoApi, updateTodoApi } from '../api/todos';
 import { useTodoStore } from '../store/todoStore';
 
 type SortOption = 'due_date' | 'name' | 'none';
@@ -101,56 +100,19 @@ const sortTodos = (todos: Todo[], sortBy: SortOption): Todo[] => {
   return [...todos].sort(sorters[sortBy]);
 };
 
-interface TodoListContentProps {
-  todosPromise: Promise<Todo[]>;
-  onDelete?: () => void;
-  onUpdate?: () => void;
-}
-
-const TodoListContent = ({ todosPromise, onDelete, onUpdate }: TodoListContentProps) => {
-  const todos = use(todosPromise);
+const TodoListContent = () => {
+  const todos = useTodoStore((s) => s.todos);
+  const isLoading = useTodoStore((s) => s.isLoading);
+  const deleteTodo = useTodoStore((s) => s.deleteTodo);
+  const deleteAllTodos = useTodoStore((s) => s.deleteAllTodos);
+  const updateTodo = useTodoStore((s) => s.updateTodo);
   const [sortBy, setSortBy] = useState<SortOption>('none');
   const [filterBy, setFilterBy] = useState<FilterOption>('all');
-  const [deletingId, setDeletingId] = useState<number | null>(null);
-  const [updatingId, setUpdatingId] = useState<number | null>(null);
-
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const filteredTodos = useMemo(
-    () =>
-      sortTodos(filterTodos(todos, filterBy), sortBy),
+    () => sortTodos(filterTodos(todos, filterBy), sortBy),
     [todos, filterBy, sortBy],
   );
-
-  const setError = useTodoStore((s) => s.setError);
-
-  const handleDelete = async (id: number) => {
-    setDeletingId(id);
-    try {
-      await deleteTodoApi(id);
-      onDelete?.();
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to delete todo';
-      setError(message);
-    } finally {
-      setDeletingId(null);
-    }
-  };
-
-  const handleUpdate = async (id: number, updates: { title?: string; content?: string; due_date?: string }) => {
-    setUpdatingId(id);
-    try {
-      await updateTodoApi(id, updates);
-      onUpdate?.();
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to update todo';
-      setError(message);
-    } finally {
-      setUpdatingId(null);
-    }
-  };
-
-  if (filteredTodos.length === 0) {
-    return <div className="empty-state">No tasks to complete.</div>;
-  }
 
   const getSortLabel = (): string => {
     const labels: Record<SortOption, string> = {
@@ -169,6 +131,19 @@ const TodoListContent = ({ todosPromise, onDelete, onUpdate }: TodoListContentPr
     };
     return labels[filterBy];
   };
+
+  if (isLoading) {
+    return (
+      <div className="loading">
+        <div className="spinner"></div>
+        <span>Loading...</span>
+      </div>
+    );
+  }
+
+  if (filteredTodos.length === 0) {
+    return <div className="empty-state">No tasks to complete.</div>;
+  }
 
   return (
     <>
@@ -202,6 +177,44 @@ const TodoListContent = ({ todosPromise, onDelete, onUpdate }: TodoListContentPr
           )}
         </div>
       </div>
+      {todos.length > 0 && (
+        <div className="delete-all-section" style={{ margin: '1rem 0' }}>
+          <button
+            className="delete-all-btn"
+            onClick={() => setShowConfirmDialog(true)}
+            style={{ backgroundColor: '#dc3545', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '4px', cursor: 'pointer' }}
+          >
+            Delete All
+          </button>
+        </div>
+      )}
+      {showConfirmDialog && (
+        <div className="confirm-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
+          <div className="confirm-dialog" style={{ backgroundColor: 'white', padding: '2rem', borderRadius: '8px', maxWidth: '400px', width: '90%' }}>
+            <p style={{ marginBottom: '1.5rem' }}>Are you sure you want to delete all todos?</p>
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+              <button
+                className="confirm-btn"
+                onClick={async () => {
+                  await deleteAllTodos();
+                  setShowConfirmDialog(false);
+                }}
+                style={{ backgroundColor: '#dc3545', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '4px', cursor: 'pointer' }}
+              >
+                Confirm
+              </button>
+              <button
+                className="cancel-btn"
+                onClick={() => setShowConfirmDialog(false)}
+                style={{ backgroundColor: '#6c757d', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '4px', cursor: 'pointer' }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="todo-list">
         {filteredTodos.map((todo) => (
           <div key={todo.id} className="todo-item">
@@ -210,30 +223,29 @@ const TodoListContent = ({ todosPromise, onDelete, onUpdate }: TodoListContentPr
                 <EditableField
                   value={todo.title}
                   type="text"
-                  onSave={(value) => handleUpdate(todo.id, { title: value })}
+                  onSave={(value) => updateTodo(todo.id, { title: value })}
                 />
               </h3>
               <p>
                 <EditableField
                   value={todo.content || ''}
                   type="textarea"
-                  onSave={(value) => handleUpdate(todo.id, { content: value || '' })}
+                  onSave={(value) => updateTodo(todo.id, { content: value || '' })}
                 />
               </p>
               <EditableField
                 value={todo.due_date || ''}
                 type="date"
-                onSave={(value) => handleUpdate(todo.id, { due_date: value || '' })}
+                onSave={(value) => updateTodo(todo.id, { due_date: value || '' })}
               />
               {todo.done && <span className="done-badge">Done</span>}
             </div>
             <button
               className="delete-btn"
-              onClick={() => handleDelete(todo.id)}
-              disabled={deletingId === todo.id || updatingId === todo.id}
+              onClick={() => deleteTodo(todo.id)}
               aria-label={`Delete ${todo.title}`}
             >
-              {deletingId === todo.id ? 'Deleting...' : 'Delete'}
+              Delete
             </button>
           </div>
         ))}
@@ -242,25 +254,22 @@ const TodoListContent = ({ todosPromise, onDelete, onUpdate }: TodoListContentPr
   );
 };
 
-interface TodoListProps {
-  todosPromise: Promise<Todo[]>;
-  version: number;
-  onDelete?: () => void;
-  onUpdate?: () => void;
-}
+export const TodoList = () => {
+  const isLoading = useTodoStore((s) => s.isLoading);
+  const fetchTodos = useTodoStore((s) => s.fetchTodos);
 
-export const TodoList = ({ todosPromise, version, onDelete, onUpdate }: TodoListProps) => {
-  return (
-    <Suspense
-      key={version}
-      fallback={
-        <div className="loading">
-          <div className="spinner"></div>
-          <span>Loading...</span>
-        </div>
-      }
-    >
-      <TodoListContent todosPromise={todosPromise} onDelete={onDelete} onUpdate={onUpdate} />
-    </Suspense>
-  );
+  useEffect(() => {
+    fetchTodos();
+  }, [fetchTodos]);
+
+  if (isLoading) {
+    return (
+      <div className="loading">
+        <div className="spinner"></div>
+        <span>Loading...</span>
+      </div>
+    );
+  }
+
+  return <TodoListContent />;
 };

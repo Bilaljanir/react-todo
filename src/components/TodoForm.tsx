@@ -1,17 +1,13 @@
 import { useState, type FormEvent } from 'react';
 import { type CreateTodoInput } from '../types';
-import { createTodoApi } from '../api/todos';
+import { useTodoStore } from '../store/todoStore';
 
-interface TodoFormProps {
-  onSuccess?: () => void;
-  onError?: (message: string) => void;
-}
-
-export const TodoForm = ({ onSuccess, onError }: TodoFormProps) => {
+export const TodoForm = () => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const createTodo = useTodoStore((s) => s.createTodo);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -29,13 +25,10 @@ export const TodoForm = ({ onSuccess, onError }: TodoFormProps) => {
     };
 
     try {
-      await createTodoApi(todo);
+      await createTodo(todo);
       setTitle('');
       setContent('');
       setDueDate('');
-      onSuccess?.();
-    } catch {
-      onError?.('Failed to create todo');
     } finally {
       setIsSubmitting(false);
     }

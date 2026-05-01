@@ -1,34 +1,6 @@
 import { create } from 'zustand';
-import type { Todo, CreateTodoInput } from '../types';
-
-const API_URL = 'https://api.todos.in.jt-lab.ch/todos';
-
-const fetchTodosFromApi = (): Promise<Todo[]> =>
-  fetch(API_URL).then((response) => {
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    return response.json();
-  });
-
-const createTodoApi = (todo: CreateTodoInput): Promise<Todo> =>
-  fetch(API_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(todo),
-  }).then((response) => {
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    return response.json();
-  });
-
-const deleteAllTodosApi = (): Promise<void> =>
-  fetch(API_URL, { method: 'DELETE' }).then((response) => {
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-  });
+import type { Todo, CreateTodoInput, UpdateTodoInput } from '../types';
+import { fetchTodos, createTodoApi, updateTodoApi, deleteTodoApi, deleteAllTodosApi } from '../api/todos';
 
 interface TodoState {
   todos: Todo[];
@@ -36,8 +8,8 @@ interface TodoState {
   error: string | null;
   fetchTodos: () => Promise<void>;
   createTodo: (input: CreateTodoInput) => Promise<void>;
-  updateTodo: (id: number, updates: Partial<Todo>) => void;
-  deleteTodo: (id: number) => void;
+  updateTodo: (id: number, updates: UpdateTodoInput) => Promise<void>;
+  deleteTodo: (id: number) => Promise<void>;
   deleteAllTodos: () => Promise<void>;
   setError: (message: string | null) => void;
   clearError: () => void;
@@ -51,7 +23,7 @@ export const useTodoStore = create<TodoState>((set, get) => ({
   fetchTodos: async () => {
     set({ isLoading: true, error: null });
     try {
-      const todos = await fetchTodosFromApi();
+      const todos = await fetchTodos();
       set({ todos, isLoading: false });
     } catch (error) {
       const message =
@@ -73,15 +45,32 @@ export const useTodoStore = create<TodoState>((set, get) => ({
     }
   },
 
-  updateTodo: (id, updates) => {
-    set({
-      error: null,
-      todos: get().todos.map((t) => (t.id === id ? { ...t, ...updates } : t)),
-    });
+  updateTodo: async (id, updates) => {
+    set({ error: null });
+    try {
+      const updatedTodo = await updateTodoApi(id, updates);
+      set({
+        todos: get().todos.map((t) => (t.id === id ? updatedTodo : t)),
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Failed to update todo';
+      set({ error: message });
+      throw error;
+    }
   },
 
-  deleteTodo: (id) => {
-    set({ error: null, todos: get().todos.filter((t) => t.id !== id) });
+  deleteTodo: async (id) => {
+    set({ error: null });
+    try {
+      await deleteTodoApi(id);
+      set({ todos: get().todos.filter((t) => t.id !== id) });
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Failed to delete todo';
+      set({ error: message });
+      throw error;
+    }
   },
 
   deleteAllTodos: async () => {
