@@ -100,7 +100,14 @@ export const TodoList = () => {
   const [todosPromise] = useState<Promise<Todo[]>>(() => fetchTodos());
 
   return (
-    <Suspense fallback={<div className="loading">Loading...</div>}>
+    <Suspense
+      fallback={
+        <div className="loading">
+          <div className="spinner"></div>
+          <span>Loading...</span>
+        </div>
+      }
+    >
       <TodoListContent todosPromise={todosPromise} />
     </Suspense>
   );
