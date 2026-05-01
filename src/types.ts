@@ -9,3 +9,7 @@ export interface Todo {
 export type CreateTodoInput = Pick<Todo, 'title' | 'content' | 'due_date'> & {
   done?: boolean;
 };
+
+export interface TodoListResponse {
+  todos: Todo[];
+}
