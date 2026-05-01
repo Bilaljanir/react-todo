@@ -15,7 +15,8 @@ export const ErrorBanner = ({ message, onDismiss }: ErrorBannerProps) => {
   }, [onDismiss]);
 
   return (
-    <div className="error-banner">
+    <div className="error-banner" role="alert">
+      <span className="error-icon">⚠</span>
       <span className="error-message">{message}</span>
       <button
         className="dismiss-btn"

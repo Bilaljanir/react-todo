@@ -1,6 +1,7 @@
 import { use, useMemo, useState, Suspense } from 'react';
 import type { Todo } from '../types';
 import { deleteTodoApi, updateTodoApi } from '../api/todos';
+import { useTodoStore } from '../store/todoStore';
 
 type SortOption = 'due_date' | 'name' | 'none';
 type FilterOption = 'all' | 'undone' | 'done';
@@ -119,13 +120,16 @@ const TodoListContent = ({ todosPromise, onDelete, onUpdate }: TodoListContentPr
     [todos, filterBy, sortBy],
   );
 
+  const setError = useTodoStore((s) => s.setError);
+
   const handleDelete = async (id: number) => {
     setDeletingId(id);
     try {
       await deleteTodoApi(id);
       onDelete?.();
-    } catch {
-      alert('Failed to delete todo');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to delete todo';
+      setError(message);
     } finally {
       setDeletingId(null);
     }
@@ -136,8 +140,9 @@ const TodoListContent = ({ todosPromise, onDelete, onUpdate }: TodoListContentPr
     try {
       await updateTodoApi(id, updates);
       onUpdate?.();
-    } catch {
-      alert('Failed to update todo');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to update todo';
+      setError(message);
     } finally {
       setUpdatingId(null);
     }
