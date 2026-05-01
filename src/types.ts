@@ -1,14 +1,15 @@
-export interface Todo {
-  id: number;
+type TodoCreateBase = {
   title: string;
   content: string | null;
   due_date: string | null;
+};
+
+export interface Todo extends TodoCreateBase {
+  id: number;
   done: boolean;
 }
 
-export type CreateTodoInput = Pick<Todo, 'title' | 'content' | 'due_date'> & {
-  done?: boolean;
-};
+export type CreateTodoInput = TodoCreateBase & { done?: boolean };
 
 export interface TodoListResponse {
   todos: Todo[];

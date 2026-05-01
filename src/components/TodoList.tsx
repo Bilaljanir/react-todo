@@ -1,16 +1,6 @@
 import { use, useMemo, useState, Suspense } from 'react';
 import type { Todo } from '../types';
 
-const API_URL = 'https://api.todos.in.jt-lab.ch/todos';
-
-const fetchTodos = (): Promise<Todo[]> =>
-  fetch(API_URL).then((response) => {
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    return response.json();
-  });
-
 type SortOption = 'due_date' | 'name' | 'none';
 type FilterOption = 'all' | 'undone' | 'done';
 
@@ -96,11 +86,15 @@ const TodoListContent = ({ todosPromise }: { todosPromise: Promise<Todo[]> }) =>
   );
 };
 
-export const TodoList = () => {
-  const [todosPromise] = useState<Promise<Todo[]>>(() => fetchTodos());
+interface TodoListProps {
+  todosPromise: Promise<Todo[]>;
+  version: number;
+}
 
+export const TodoList = ({ todosPromise, version }: TodoListProps) => {
   return (
     <Suspense
+      key={version}
       fallback={
         <div className="loading">
           <div className="spinner"></div>
