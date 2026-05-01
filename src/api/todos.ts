@@ -37,3 +37,17 @@ export const deleteTodoApi = (id: number): Promise<void> =>
       throw new Error(`HTTP error! status: ${response.status}`);
     }
   });
+
+export type UpdateTodoInput = Partial<Pick<Todo, 'title' | 'content' | 'due_date' | 'done'>>;
+
+export const updateTodoApi = (id: number, updates: UpdateTodoInput): Promise<Todo> =>
+  fetch(`${API_URL}?id=eq.${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', Prefer: 'return=representation' },
+    body: JSON.stringify(updates),
+  }).then((response) => {
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json().then((data) => data[0]);
+  });

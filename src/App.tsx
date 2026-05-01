@@ -21,7 +21,7 @@ const App = () => {
       <h1>Todo List</h1>
       {error && <ErrorBanner message={error} onDismiss={clearError} />}
       <TodoForm onSuccess={refetchTodos} onError={clearError} />
-      <TodoList todosPromise={todosPromise} version={todosVersion} onDelete={refetchTodos} />
+      <TodoList todosPromise={todosPromise} version={todosVersion} onDelete={refetchTodos} onUpdate={refetchTodos} />
     </div>
   );
 };

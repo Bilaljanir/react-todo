@@ -1,9 +1,81 @@
 import { use, useMemo, useState, Suspense } from 'react';
 import type { Todo } from '../types';
-import { deleteTodoApi } from '../api/todos';
+import { deleteTodoApi, updateTodoApi } from '../api/todos';
 
 type SortOption = 'due_date' | 'name' | 'none';
 type FilterOption = 'all' | 'undone' | 'done';
+
+interface EditableFieldProps {
+  value: string;
+  type: 'text' | 'textarea' | 'date';
+  onSave: (value: string) => void | Promise<void>;
+}
+
+const EditableField = ({ value, type, onSave }: EditableFieldProps) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState(value);
+
+  const handleBlur = () => {
+    if (editValue !== value) {
+      onSave(editValue);
+    }
+    setIsEditing(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey && type !== 'textarea') {
+      e.preventDefault();
+      handleBlur();
+    }
+    if (e.key === 'Escape') {
+      setEditValue(value);
+      setIsEditing(false);
+    }
+  };
+
+  if (isEditing) {
+    if (type === 'textarea') {
+      return (
+        <textarea
+          value={editValue}
+          onChange={(e) => setEditValue(e.target.value)}
+          onBlur={handleBlur}
+          onKeyDown={handleKeyDown}
+          autoFocus
+        />
+      );
+    }
+    return (
+      <input
+        type={type}
+        value={editValue}
+        onChange={(e) => setEditValue(e.target.value)}
+        onBlur={handleBlur}
+        onKeyDown={handleKeyDown}
+        autoFocus
+      />
+    );
+  }
+
+  const handleClick = () => {
+    setEditValue(value);
+    setIsEditing(true);
+  };
+
+  if (type === 'date') {
+    return (
+      <small onClick={handleClick} style={{ cursor: 'pointer' }}>
+        Due: {value || 'Click to add'}
+      </small>
+    );
+  }
+
+  return (
+    <span onClick={handleClick} style={{ cursor: 'pointer' }}>
+      {value}
+    </span>
+  );
+};
 
 const filterTodos = (todos: Todo[], filterBy: FilterOption): Todo[] => {
   const filters: Record<FilterOption, (todo: Todo) => boolean> = {
@@ -31,13 +103,15 @@ const sortTodos = (todos: Todo[], sortBy: SortOption): Todo[] => {
 interface TodoListContentProps {
   todosPromise: Promise<Todo[]>;
   onDelete?: () => void;
+  onUpdate?: () => void;
 }
 
-const TodoListContent = ({ todosPromise, onDelete }: TodoListContentProps) => {
+const TodoListContent = ({ todosPromise, onDelete, onUpdate }: TodoListContentProps) => {
   const todos = use(todosPromise);
   const [sortBy, setSortBy] = useState<SortOption>('none');
   const [filterBy, setFilterBy] = useState<FilterOption>('all');
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [updatingId, setUpdatingId] = useState<number | null>(null);
 
   const filteredTodos = useMemo(
     () =>
@@ -54,6 +128,18 @@ const TodoListContent = ({ todosPromise, onDelete }: TodoListContentProps) => {
       alert('Failed to delete todo');
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  const handleUpdate = async (id: number, updates: { title?: string; content?: string; due_date?: string }) => {
+    setUpdatingId(id);
+    try {
+      await updateTodoApi(id, updates);
+      onUpdate?.();
+    } catch {
+      alert('Failed to update todo');
+    } finally {
+      setUpdatingId(null);
     }
   };
 
@@ -91,17 +177,31 @@ const TodoListContent = ({ todosPromise, onDelete }: TodoListContentProps) => {
         {filteredTodos.map((todo) => (
           <div key={todo.id} className="todo-item">
             <div className="todo-item-content">
-              <h3>{todo.title}</h3>
-              {todo.content && <p>{todo.content}</p>}
-              {todo.due_date && (
-                <small>Due: {todo.due_date}</small>
-              )}
+              <h3>
+                <EditableField
+                  value={todo.title}
+                  type="text"
+                  onSave={(value) => handleUpdate(todo.id, { title: value })}
+                />
+              </h3>
+              <p>
+                <EditableField
+                  value={todo.content || ''}
+                  type="textarea"
+                  onSave={(value) => handleUpdate(todo.id, { content: value || '' })}
+                />
+              </p>
+              <EditableField
+                value={todo.due_date || ''}
+                type="date"
+                onSave={(value) => handleUpdate(todo.id, { due_date: value || '' })}
+              />
               {todo.done && <span className="done-badge">Done</span>}
             </div>
             <button
               className="delete-btn"
               onClick={() => handleDelete(todo.id)}
-              disabled={deletingId === todo.id}
+              disabled={deletingId === todo.id || updatingId === todo.id}
               aria-label={`Delete ${todo.title}`}
             >
               {deletingId === todo.id ? 'Deleting...' : 'Delete'}
@@ -117,9 +217,10 @@ interface TodoListProps {
   todosPromise: Promise<Todo[]>;
   version: number;
   onDelete?: () => void;
+  onUpdate?: () => void;
 }
 
-export const TodoList = ({ todosPromise, version, onDelete }: TodoListProps) => {
+export const TodoList = ({ todosPromise, version, onDelete, onUpdate }: TodoListProps) => {
   return (
     <Suspense
       key={version}
@@ -130,7 +231,7 @@ export const TodoList = ({ todosPromise, version, onDelete }: TodoListProps) => 
         </div>
       }
     >
-      <TodoListContent todosPromise={todosPromise} onDelete={onDelete} />
+      <TodoListContent todosPromise={todosPromise} onDelete={onDelete} onUpdate={onUpdate} />
     </Suspense>
   );
 };
