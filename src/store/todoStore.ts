@@ -1,6 +1,12 @@
 import { create } from 'zustand';
 import type { Todo, CreateTodoInput, UpdateTodoInput } from '../types';
-import { fetchTodos, createTodoApi, updateTodoApi, deleteTodoApi, deleteAllTodosApi } from '../api/todos';
+import {
+  fetchTodos,
+  createTodoApi,
+  updateTodoApi,
+  deleteTodoApi,
+  deleteAllTodosApi,
+} from '../api/todos';
 
 interface TodoState {
   todos: Todo[];

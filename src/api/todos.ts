@@ -20,7 +20,10 @@ export const createTodoApi = (todo: {
 }): Promise<Todo> =>
   fetch(API_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Prefer: 'return=representation' },
+    headers: {
+      'Content-Type': 'application/json',
+      Prefer: 'return=representation',
+    },
     body: JSON.stringify(todo),
   }).then((response) => {
     if (!response.ok) {
@@ -47,12 +50,20 @@ export const deleteAllTodosApi = (): Promise<void> =>
     }
   });
 
-export type UpdateTodoInput = Partial<Pick<Todo, 'title' | 'content' | 'due_date' | 'done'>>;
+export type UpdateTodoInput = Partial<
+  Pick<Todo, 'title' | 'content' | 'due_date' | 'done'>
+>;
 
-export const updateTodoApi = (id: number, updates: UpdateTodoInput): Promise<Todo> =>
+export const updateTodoApi = (
+  id: number,
+  updates: UpdateTodoInput,
+): Promise<Todo> =>
   fetch(`${API_URL}?id=eq.${id}`, {
     method: 'PATCH',
-    headers: { 'Content-Type': 'application/json', Prefer: 'return=representation' },
+    headers: {
+      'Content-Type': 'application/json',
+      Prefer: 'return=representation',
+    },
     body: JSON.stringify(updates),
   }).then((response) => {
     if (!response.ok) {

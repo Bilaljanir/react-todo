@@ -9,8 +9,16 @@ import { useTodoStore } from './store/todoStore';
 const ErrorFallback = ({ error, resetErrorBoundary }: FallbackProps) => (
   <div className="error-banner" role="alert" style={{ margin: '1rem' }}>
     <span className="error-icon">⚠</span>
-    <span className="error-message">Something went wrong: {(error as Error).message}</span>
-    <button className="dismiss-btn" onClick={resetErrorBoundary} aria-label="Dismiss error">✕</button>
+    <span className="error-message">
+      Something went wrong: {(error as Error).message}
+    </span>
+    <button
+      className="dismiss-btn"
+      onClick={resetErrorBoundary}
+      aria-label="Dismiss error"
+    >
+      ✕
+    </button>
   </div>
 );
 
