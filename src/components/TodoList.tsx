@@ -1,5 +1,6 @@
 import { use, useMemo, useState, Suspense } from 'react';
 import type { Todo } from '../types';
+import { deleteTodoApi } from '../api/todos';
 
 type SortOption = 'due_date' | 'name' | 'none';
 type FilterOption = 'all' | 'undone' | 'done';
@@ -27,16 +28,34 @@ const sortTodos = (todos: Todo[], sortBy: SortOption): Todo[] => {
   return [...todos].sort(sorters[sortBy]);
 };
 
-const TodoListContent = ({ todosPromise }: { todosPromise: Promise<Todo[]> }) => {
+interface TodoListContentProps {
+  todosPromise: Promise<Todo[]>;
+  onDelete?: () => void;
+}
+
+const TodoListContent = ({ todosPromise, onDelete }: TodoListContentProps) => {
   const todos = use(todosPromise);
   const [sortBy, setSortBy] = useState<SortOption>('none');
   const [filterBy, setFilterBy] = useState<FilterOption>('all');
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const filteredTodos = useMemo(
     () =>
       sortTodos(filterTodos(todos, filterBy), sortBy),
     [todos, filterBy, sortBy],
   );
+
+  const handleDelete = async (id: number) => {
+    setDeletingId(id);
+    try {
+      await deleteTodoApi(id);
+      onDelete?.();
+    } catch {
+      alert('Failed to delete todo');
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   if (filteredTodos.length === 0) {
     return <div className="empty-state">No tasks to complete.</div>;
@@ -79,6 +98,14 @@ const TodoListContent = ({ todosPromise }: { todosPromise: Promise<Todo[]> }) =>
               )}
               {todo.done && <span className="done-badge">Done</span>}
             </div>
+            <button
+              className="delete-btn"
+              onClick={() => handleDelete(todo.id)}
+              disabled={deletingId === todo.id}
+              aria-label={`Delete ${todo.title}`}
+            >
+              {deletingId === todo.id ? 'Deleting...' : 'Delete'}
+            </button>
           </div>
         ))}
       </div>
@@ -89,9 +116,10 @@ const TodoListContent = ({ todosPromise }: { todosPromise: Promise<Todo[]> }) =>
 interface TodoListProps {
   todosPromise: Promise<Todo[]>;
   version: number;
+  onDelete?: () => void;
 }
 
-export const TodoList = ({ todosPromise, version }: TodoListProps) => {
+export const TodoList = ({ todosPromise, version, onDelete }: TodoListProps) => {
   return (
     <Suspense
       key={version}
@@ -102,7 +130,7 @@ export const TodoList = ({ todosPromise, version }: TodoListProps) => {
         </div>
       }
     >
-      <TodoListContent todosPromise={todosPromise} />
+      <TodoListContent todosPromise={todosPromise} onDelete={onDelete} />
     </Suspense>
   );
 };

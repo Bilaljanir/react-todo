@@ -28,3 +28,12 @@ export const createTodoApi = (todo: {
     }
     return response.json();
   });
+
+export const deleteTodoApi = (id: number): Promise<void> =>
+  fetch(`${API_URL}?id=eq.${id}`, {
+    method: 'DELETE',
+  }).then((response) => {
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+  });
