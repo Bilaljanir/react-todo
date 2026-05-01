@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import type { Todo, CreateTodoInput, UpdateTodoInput } from '../types';
 import {
-  fetchTodos,
   createTodoApi,
   updateTodoApi,
   deleteTodoApi,
@@ -10,10 +9,9 @@ import {
 
 interface TodoState {
   todos: Todo[];
-  isLoading: boolean;
   error: string | null;
-  fetchTodos: () => Promise<void>;
-  createTodo: (input: CreateTodoInput) => Promise<void>;
+  setTodos: (todos: Todo[]) => void;
+  createTodo: (input: CreateTodoInput) => Promise<Todo>;
   updateTodo: (id: number, updates: UpdateTodoInput) => Promise<void>;
   deleteTodo: (id: number) => Promise<void>;
   deleteAllTodos: () => Promise<void>;
@@ -23,26 +21,16 @@ interface TodoState {
 
 export const useTodoStore = create<TodoState>((set, get) => ({
   todos: [],
-  isLoading: false,
   error: null,
 
-  fetchTodos: async () => {
-    set({ isLoading: true, error: null });
-    try {
-      const todos = await fetchTodos();
-      set({ todos, isLoading: false });
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Failed to fetch todos';
-      set({ error: message, isLoading: false });
-    }
-  },
+  setTodos: (todos) => set({ todos }),
 
   createTodo: async (input) => {
     set({ error: null });
     try {
       const newTodo = await createTodoApi(input);
       set({ todos: [...get().todos, newTodo] });
+      return newTodo;
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Failed to create todo';

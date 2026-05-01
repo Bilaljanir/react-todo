@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react';
+import { use, useMemo, useState, useEffect } from 'react';
 import type { Todo } from '../types';
 import { useTodoStore } from '../store/todoStore';
 
@@ -100,15 +100,23 @@ const sortTodos = (todos: Todo[], sortBy: SortOption): Todo[] => {
   return [...todos].sort(sorters[sortBy]);
 };
 
-const TodoListContent = () => {
+const TodoListContent = ({ todoPromise }: { todoPromise: Promise<Todo[]> }) => {
+  const initialTodos = use(todoPromise);
   const todos = useTodoStore((s) => s.todos);
-  const isLoading = useTodoStore((s) => s.isLoading);
+  const setTodos = useTodoStore((s) => s.setTodos);
   const deleteTodo = useTodoStore((s) => s.deleteTodo);
   const deleteAllTodos = useTodoStore((s) => s.deleteAllTodos);
   const updateTodo = useTodoStore((s) => s.updateTodo);
   const [sortBy, setSortBy] = useState<SortOption>('none');
   const [filterBy, setFilterBy] = useState<FilterOption>('all');
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+
+  useEffect(() => {
+    if (todos.length === 0 && initialTodos.length > 0) {
+      setTodos(initialTodos);
+    }
+  }, [initialTodos, setTodos, todos.length]);
+
   const filteredTodos = useMemo(
     () => sortTodos(filterTodos(todos, filterBy), sortBy),
     [todos, filterBy, sortBy],
@@ -131,19 +139,6 @@ const TodoListContent = () => {
     };
     return labels[filterBy];
   };
-
-  if (isLoading) {
-    return (
-      <div className="loading">
-        <div className="spinner"></div>
-        <span>Loading...</span>
-      </div>
-    );
-  }
-
-  if (filteredTodos.length === 0) {
-    return <div className="empty-state">No tasks to complete.</div>;
-  }
 
   return (
     <>
@@ -269,65 +264,69 @@ const TodoListContent = () => {
         </div>
       )}
 
-      <div className="todo-list">
-        {filteredTodos.map((todo) => (
-          <div key={todo.id} className="todo-item">
-            <div className="todo-item-content">
-              <h3>
+      {filteredTodos.length === 0 ? (
+        <div className="empty-state">No tasks to complete.</div>
+      ) : (
+        <div className="todo-list">
+          {filteredTodos.map((todo) => (
+            <div key={todo.id} className="todo-item">
+              <div className="todo-item-content">
+                <h3>
+                  <EditableField
+                    value={todo.title}
+                    type="text"
+                    onSave={(value) => updateTodo(todo.id, { title: value })}
+                  />
+                </h3>
+                <p>
+                  <EditableField
+                    value={todo.content || ''}
+                    type="textarea"
+                    onSave={(value) =>
+                      updateTodo(todo.id, { content: value || '' })
+                    }
+                  />
+                </p>
                 <EditableField
-                  value={todo.title}
-                  type="text"
-                  onSave={(value) => updateTodo(todo.id, { title: value })}
-                />
-              </h3>
-              <p>
-                <EditableField
-                  value={todo.content || ''}
-                  type="textarea"
+                  value={todo.due_date || ''}
+                  type="date"
                   onSave={(value) =>
-                    updateTodo(todo.id, { content: value || '' })
+                    updateTodo(todo.id, { due_date: value || '' })
                   }
                 />
-              </p>
-              <EditableField
-                value={todo.due_date || ''}
-                type="date"
-                onSave={(value) =>
-                  updateTodo(todo.id, { due_date: value || '' })
-                }
-              />
-              {todo.done && <span className="done-badge">Done</span>}
+                {todo.done && <span className="done-badge">Done</span>}
+              </div>
+              <button
+                className={todo.done ? 'undone-btn' : 'done-btn'}
+                onClick={() => updateTodo(todo.id, { done: !todo.done })}
+                aria-label={`Mark ${todo.title} as ${todo.done ? 'undone' : 'done'}`}
+                style={{
+                  backgroundColor: todo.done ? '#6c757d' : '#28a745',
+                  color: 'white',
+                  border: 'none',
+                  padding: '0.5rem 1rem',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  marginRight: '0.5rem',
+                }}
+              >
+                {todo.done ? 'Mark Undone' : 'Mark Done'}
+              </button>
+              <button
+                className="delete-btn"
+                onClick={() => deleteTodo(todo.id)}
+                aria-label={`Delete ${todo.title}`}
+              >
+                Delete
+              </button>
             </div>
-            <button
-              className="delete-btn"
-              onClick={() => deleteTodo(todo.id)}
-              aria-label={`Delete ${todo.title}`}
-            >
-              Delete
-            </button>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </>
   );
 };
 
-export const TodoList = () => {
-  const isLoading = useTodoStore((s) => s.isLoading);
-  const fetchTodos = useTodoStore((s) => s.fetchTodos);
-
-  useEffect(() => {
-    fetchTodos();
-  }, [fetchTodos]);
-
-  if (isLoading) {
-    return (
-      <div className="loading">
-        <div className="spinner"></div>
-        <span>Loading...</span>
-      </div>
-    );
-  }
-
-  return <TodoListContent />;
+export const TodoList = ({ todoPromise }: { todoPromise: Promise<Todo[]> }) => {
+  return <TodoListContent todoPromise={todoPromise} />;
 };

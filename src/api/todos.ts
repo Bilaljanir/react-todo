@@ -1,4 +1,4 @@
-import type { Todo } from '../types';
+import type { Todo, UpdateTodoInput } from '../types';
 
 export type { Todo };
 
@@ -49,10 +49,6 @@ export const deleteAllTodosApi = (): Promise<void> =>
       throw new Error(`HTTP error! status: ${response.status}`);
     }
   });
-
-export type UpdateTodoInput = Partial<
-  Pick<Todo, 'title' | 'content' | 'due_date' | 'done'>
->;
 
 export const updateTodoApi = (
   id: number,

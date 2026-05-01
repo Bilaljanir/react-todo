@@ -1,3 +1,4 @@
+import { useRef, Suspense } from 'react';
 import type { FallbackProps } from 'react-error-boundary';
 import { ErrorBoundary } from 'react-error-boundary';
 import './App.css';
@@ -5,6 +6,7 @@ import { TodoList } from './components/TodoList';
 import { TodoForm } from './components/TodoForm';
 import { ErrorBanner } from './components/ErrorBanner';
 import { useTodoStore } from './store/todoStore';
+import { fetchTodos } from './api/todos';
 
 const ErrorFallback = ({ error, resetErrorBoundary }: FallbackProps) => (
   <div className="error-banner" role="alert" style={{ margin: '1rem' }}>
@@ -24,6 +26,7 @@ const ErrorFallback = ({ error, resetErrorBoundary }: FallbackProps) => (
 
 const App = () => {
   const { error, clearError } = useTodoStore();
+  const todoPromise = useRef(fetchTodos()).current;
 
   return (
     <ErrorBoundary FallbackComponent={ErrorFallback} onReset={clearError}>
@@ -31,7 +34,14 @@ const App = () => {
         <h1>Todo List</h1>
         {error && <ErrorBanner message={error} onDismiss={clearError} />}
         <TodoForm />
-        <TodoList />
+        <Suspense fallback={
+          <div className="loading">
+            <div className="spinner"></div>
+            <span>Loading...</span>
+          </div>
+        }>
+          <TodoList todoPromise={todoPromise} />
+        </Suspense>
       </div>
     </ErrorBoundary>
   );
