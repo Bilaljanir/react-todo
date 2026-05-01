@@ -147,6 +147,24 @@ const TodoListContent = ({ todosPromise, onDelete, onUpdate }: TodoListContentPr
     return <div className="empty-state">No tasks to complete.</div>;
   }
 
+  const getSortLabel = (): string => {
+    const labels: Record<SortOption, string> = {
+      none: 'None',
+      name: 'Name',
+      due_date: 'Due Date',
+    };
+    return labels[sortBy];
+  };
+
+  const getFilterLabel = (): string => {
+    const labels: Record<FilterOption, string> = {
+      all: 'All',
+      undone: 'Undone',
+      done: 'Done',
+    };
+    return labels[filterBy];
+  };
+
   return (
     <>
       <div className="controls">
@@ -160,6 +178,9 @@ const TodoListContent = ({ todosPromise, onDelete, onUpdate }: TodoListContentPr
             <option value="name">Name</option>
             <option value="due_date">Due Date</option>
           </select>
+          {sortBy !== 'none' && (
+            <span className="active-indicator">Sorted by: {getSortLabel()}</span>
+          )}
         </div>
         <div className="control-group">
           <label>Filter:</label>
@@ -171,6 +192,9 @@ const TodoListContent = ({ todosPromise, onDelete, onUpdate }: TodoListContentPr
             <option value="undone">Undone</option>
             <option value="done">Done</option>
           </select>
+          {filterBy !== 'all' && (
+            <span className="active-indicator">Filter: {getFilterLabel()}</span>
+          )}
         </div>
       </div>
       <div className="todo-list">
